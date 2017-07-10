@@ -26,15 +26,6 @@
       <version>${jre.version}</version>
     </dependency>
     <dependency>
-      <groupId>ball</groupId>
-      <artifactId>ball-util</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.ant</groupId>
-      <artifactId>ant</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-cli</artifactId>
     </dependency>
