@@ -1,0 +1,5 @@
+2017-07-09  Allen D. Ball  <ball@sol.local>
+
+	* src/main/java/ball/maven/wagon/providers/gs/GSUtilWagon.java:
+	Initial writing.
+

@@ -58,7 +58,7 @@ public class GSUtilWagon extends AbstractWagon implements CommandExecutor {
         fireGetStarted(resource, destination);
 
         try {
-            rsync(getRepository().getUrl() + resourceName, destination);
+            cp(getRepository().getUrl() + resourceName, destination);
         } catch (CommandExecutionException exception) {
             fireTransferError(resource, exception, TransferEvent.REQUEST_GET);
         }
@@ -100,7 +100,7 @@ public class GSUtilWagon extends AbstractWagon implements CommandExecutor {
         firePutStarted(resource, source);
 
         try {
-            rsync(source, getRepository().getUrl() + destination);
+            cp(source, getRepository().getUrl() + destination);
         } catch (CommandExecutionException exception) {
             fireTransferError(resource, exception, TransferEvent.REQUEST_PUT);
         }
@@ -115,7 +115,8 @@ public class GSUtilWagon extends AbstractWagon implements CommandExecutor {
                                                         ResourceDoesNotExistException,
                                                         AuthorizationException {
         try {
-            rsync(source, getRepository().getUrl() + destination);
+            cp(source,
+               getRepository().getUrl() + destination);
         } catch (CommandExecutionException exception) {
             throw new TransferFailedException(exception.getMessage(),
                                               exception);
@@ -125,25 +126,25 @@ public class GSUtilWagon extends AbstractWagon implements CommandExecutor {
     @Override
     public boolean supportsDirectoryCopy() { return true; }
 
-    private void rsync(File source,
-                       String destination) throws CommandExecutionException {
-        rsync(source.getAbsolutePath(), destination);
+    private void cp(File source,
+                    String destination) throws CommandExecutionException {
+        cp(source.getAbsolutePath(), destination);
     }
 
-    private void rsync(String source,
-                       File destination) throws CommandExecutionException,
-                                                TransferFailedException {
+    private void cp(String source,
+                    File destination) throws CommandExecutionException,
+                                             TransferFailedException {
         createParentDirectories(destination);
-        rsync(source, destination.getAbsolutePath());
+        cp(source, destination.getAbsolutePath());
     }
 
-    private void rsync(String source,
-                       String destination) throws CommandExecutionException {
+    private void cp(String source,
+                    String destination) throws CommandExecutionException {
         Commandline cl = new Commandline();
 
         cl.setExecutable("gsutil");
         cl.addArguments(new String[] {
-                            "-m", "rsync", "-d", "-r", source, destination
+                            "-m", "cp", "-n", "-r", source, destination
                         });
 
         executeCommand(CommandLineUtils.toString(cl.getCommandline()));
@@ -185,7 +186,8 @@ public class GSUtilWagon extends AbstractWagon implements CommandExecutor {
                 }
             }
         } catch (CommandLineException exception) {
-            throw new CommandExecutionException("Error executing command line",
+            throw new CommandExecutionException("Error executing command line: "
+                                                + command,
                                                 exception);
         }
 
