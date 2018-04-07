@@ -17,7 +17,7 @@
   <name>Maven Wagon Providers</name>
   <packaging>jar</packaging>
   <properties>
-    <jre.version>1.7</jre.version>
+    <jre.version>1.8</jre.version>
   </properties>
   <dependencies verbose="true">
     <dependency>
@@ -28,15 +28,20 @@
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-cli</artifactId>
+      <scope>provided</scope>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-component-annotations</artifactId>
+      <scope>provided</scope>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.maven.wagon</groupId>
       <artifactId>wagon-provider-api</artifactId>
       <scope>provided</scope>
+      <optional>true</optional>
     </dependency>
   </dependencies>
   <build>
