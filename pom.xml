@@ -27,8 +27,7 @@
     </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
-      <artifactId>plexus-cli</artifactId>
-      <scope>provided</scope>
+      <artifactId>plexus-utils</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>
