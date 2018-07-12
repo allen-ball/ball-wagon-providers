@@ -21,11 +21,6 @@
   </properties>
   <dependencies verbose="true">
     <dependency>
-      <groupId>java</groupId>
-      <artifactId>jre</artifactId>
-      <version>${jre.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-utils</artifactId>
       <optional>true</optional>
