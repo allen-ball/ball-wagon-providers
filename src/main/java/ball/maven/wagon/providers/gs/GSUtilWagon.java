@@ -1,11 +1,13 @@
 /*
  * $Id$
  *
- * Copyright 2017 Allen D. Ball.  All rights reserved.
+ * Copyright 2017 - 2020 Allen D. Ball.  All rights reserved.
  */
 package ball.maven.wagon.providers.gs;
 
 import java.io.File;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.apache.maven.wagon.AbstractWagon;
 import org.apache.maven.wagon.CommandExecutionException;
 import org.apache.maven.wagon.CommandExecutor;
@@ -27,19 +29,12 @@ import org.codehaus.plexus.util.cli.Commandline;
  * {@link.uri https://cloud.google.com/storage/docs/gsutil/ gsutil}
  * {@link Wagon} implementation.
  *
- * @author {@link.uri mailto:ball@iprotium.com Allen D. Ball}
+ * @author {@link.uri mailto:ball@hcf.dev Allen D. Ball}
  * @version $Revision$
  */
-@Component(hint = "gs",
-           role = Wagon.class,
-           instantiationStrategy = "per-lookup")
+@Component(hint = "gs", role = Wagon.class, instantiationStrategy = "per-lookup")
+@NoArgsConstructor @ToString
 public class GSUtilWagon extends AbstractWagon implements CommandExecutor {
-
-    /**
-     * Sole constructor.
-     */
-    public GSUtilWagon() { super(); }
-
     @Override
     protected void openConnectionInternal() throws AuthenticationException { }
 
@@ -47,45 +42,45 @@ public class GSUtilWagon extends AbstractWagon implements CommandExecutor {
     public void closeConnection() { }
 
     @Override
-    public void get(String resourceName,
-                    File destination) throws TransferFailedException,
-                                             ResourceDoesNotExistException,
-                                             AuthorizationException {
-        Resource resource = new Resource(resourceName);
+    public void get(String source,
+                    File target) throws TransferFailedException,
+                                        ResourceDoesNotExistException,
+                                        AuthorizationException {
+        Resource resource = new Resource(source);
 
-        fireGetInitiated(resource, destination);
-        createParentDirectories(destination);
-        fireGetStarted(resource, destination);
+        fireGetInitiated(resource, target);
+        createParentDirectories(target);
+        fireGetStarted(resource, target);
 
         try {
-            cp(getRepository().getUrl() + resourceName, destination);
+            cp(getRepository().getUrl() + source, target);
         } catch (CommandExecutionException exception) {
             fireTransferError(resource, exception, TransferEvent.REQUEST_GET);
         }
 
-        postProcessListeners(resource, destination, TransferEvent.REQUEST_GET);
-        fireGetCompleted(resource, destination);
+        postProcessListeners(resource, target, TransferEvent.REQUEST_GET);
+        fireGetCompleted(resource, target);
     }
 
     @Override
-    public boolean getIfNewer(String resourceName, File destination,
+    public boolean getIfNewer(String source, File target,
                               long timestamp) throws TransferFailedException,
                                                      ResourceDoesNotExistException,
                                                      AuthorizationException {
         fireSessionDebug("getIfNewer in "
                          + getClass().getSimpleName()
                          + " is not supported - performing an unconditional get");
-        get(resourceName, destination);
+        get(source, target);
 
         return true;
     }
 
     @Override
     public void put(File source,
-                    String destination) throws TransferFailedException,
-                                               ResourceDoesNotExistException,
-                                               AuthorizationException {
-        Resource resource = new Resource(destination);
+                    String target) throws TransferFailedException,
+                                          ResourceDoesNotExistException,
+                                          AuthorizationException {
+        Resource resource = new Resource(target);
 
         resource.setContentLength(source.length());
         resource.setLastModified(source.lastModified());
@@ -100,7 +95,7 @@ public class GSUtilWagon extends AbstractWagon implements CommandExecutor {
         firePutStarted(resource, source);
 
         try {
-            cp(source, getRepository().getUrl() + destination);
+            cp(source, getRepository().getUrl() + target);
         } catch (CommandExecutionException exception) {
             fireTransferError(resource, exception, TransferEvent.REQUEST_PUT);
         }
@@ -111,12 +106,12 @@ public class GSUtilWagon extends AbstractWagon implements CommandExecutor {
 
     @Override
     public void putDirectory(File source,
-                             String destination) throws TransferFailedException,
-                                                        ResourceDoesNotExistException,
-                                                        AuthorizationException {
+                             String target) throws TransferFailedException,
+                                                   ResourceDoesNotExistException,
+                                                   AuthorizationException {
         try {
             cp(source,
-               getRepository().getUrl() + destination);
+               getRepository().getUrl() + target);
         } catch (CommandExecutionException exception) {
             throw new TransferFailedException(exception.getMessage(),
                                               exception);
@@ -127,24 +122,24 @@ public class GSUtilWagon extends AbstractWagon implements CommandExecutor {
     public boolean supportsDirectoryCopy() { return true; }
 
     private void cp(File source,
-                    String destination) throws CommandExecutionException {
-        cp(source.getAbsolutePath(), destination);
+                    String target) throws CommandExecutionException {
+        cp(source.getAbsolutePath(), target);
     }
 
     private void cp(String source,
-                    File destination) throws CommandExecutionException,
-                                             TransferFailedException {
-        createParentDirectories(destination);
-        cp(source, destination.getAbsolutePath());
+                    File target) throws CommandExecutionException,
+                                        TransferFailedException {
+        createParentDirectories(target);
+        cp(source, target.getAbsolutePath());
     }
 
     private void cp(String source,
-                    String destination) throws CommandExecutionException {
+                    String target) throws CommandExecutionException {
         Commandline cl = new Commandline();
 
         cl.setExecutable("gsutil");
         cl.addArguments(new String[] {
-                            "-m", "cp", "-n", "-r", source, destination
+                            "-m", "cp", "-n", "-r", source, target
                         });
 
         executeCommand(CommandLineUtils.toString(cl.getCommandline()));
@@ -193,7 +188,4 @@ public class GSUtilWagon extends AbstractWagon implements CommandExecutor {
 
         return streams;
     }
-
-    @Override
-    public String toString() { return super.toString(); }
 }
