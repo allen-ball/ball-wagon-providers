@@ -3,7 +3,7 @@
  *
  * Copyright 2017 - 2020 Allen D. Ball.  All rights reserved.
  */
-package ball.maven.wagon.providers.gs;
+package ball.maven.wagon.providers;
 
 import java.io.File;
 import lombok.NoArgsConstructor;

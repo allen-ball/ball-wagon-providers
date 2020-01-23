@@ -3,7 +3,7 @@
  *
  * Copyright 2020 Allen D. Ball.  All rights reserved.
  */
-package ball.maven.wagon.providers.s3;
+package ball.maven.wagon.providers;
 
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.DefaultAwsRegionProviderChain;
