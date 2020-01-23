@@ -1,3 +1,8 @@
+2020-01-23  Allen D. Ball  <ball@hcf.dev>
+
+	* src/main/java/ball/maven/wagon/providers/s3/S3UtilWagon.java:
+	Initial writing.
+
 2017-07-09  Allen D. Ball  <ball@sol.local>
 
 	* Removed dependency on ball:ball-util.
