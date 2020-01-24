@@ -5,7 +5,9 @@
  */
 package ball.maven.wagon.providers;
 
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.regions.AwsRegionProvider;
 import com.amazonaws.regions.DefaultAwsRegionProviderChain;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
@@ -41,9 +43,9 @@ public class S3UtilWagon extends AbstractWagon {
         if (manager == null) {
             synchronized (this) {
                 if (manager == null) {
-                    DefaultAWSCredentialsProviderChain credentials =
+                    AWSCredentialsProvider credentials =
                         new DefaultAWSCredentialsProviderChain();
-                    DefaultAwsRegionProviderChain region =
+                    AwsRegionProvider region =
                         new DefaultAwsRegionProviderChain();
                     AmazonS3 client =
                         AmazonS3ClientBuilder.standard()
