@@ -5,15 +5,16 @@
  */
 package ball.maven.wagon.providers;
 
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.StorageOptions;
 import java.io.File;
+import java.nio.channels.FileChannel;
+import java.nio.channels.WritableByteChannel;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.maven.wagon.AbstractWagon;
-import org.apache.maven.wagon.CommandExecutionException;
-import org.apache.maven.wagon.CommandExecutor;
-import org.apache.maven.wagon.PathUtils;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
-import org.apache.maven.wagon.Streams;
 import org.apache.maven.wagon.TransferFailedException;
 import org.apache.maven.wagon.Wagon;
 import org.apache.maven.wagon.authentication.AuthenticationException;
@@ -21,22 +22,45 @@ import org.apache.maven.wagon.authorization.AuthorizationException;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.resource.Resource;
 import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.util.cli.CommandLineException;
-import org.codehaus.plexus.util.cli.CommandLineUtils;
-import org.codehaus.plexus.util.cli.Commandline;
+
+import static java.nio.file.StandardOpenOption.READ;
 
 /**
- * {@link.uri https://cloud.google.com/storage/docs/gsutil/ gsutil}
- * {@link Wagon} implementation.
+ * Google Storage {@link Wagon} implementation.
  *
  * @author {@link.uri mailto:ball@hcf.dev Allen D. Ball}
  * @version $Revision$
  */
 @Component(hint = "gs", role = Wagon.class, instantiationStrategy = "per-lookup")
 @NoArgsConstructor @ToString
-public class GSUtilWagon extends AbstractWagon implements CommandExecutor {
+public class GSUtilWagon extends AbstractWagon {
+    private volatile Bucket bucket = null;
+
     @Override
-    protected void openConnectionInternal() throws AuthenticationException { }
+    protected void openConnectionInternal() throws AuthenticationException {
+        try {
+            if (bucket == null) {
+                synchronized (this) {
+                    if (bucket == null) {
+                        bucket =
+                            StorageOptions.getDefaultInstance().getService()
+                            .get(getRepository().getHost());
+                    }
+                }
+            }
+
+            if (bucket == null) {
+                throw new ResourceDoesNotExistException(getRepository().toString());
+            }
+        } catch (Exception exception) {
+            if (exception instanceof AuthenticationException) {
+                throw (AuthenticationException) exception;
+            } else {
+                throw new AuthenticationException(getRepository().toString(),
+                                                  exception);
+            }
+        }
+    }
 
     @Override
     public void closeConnection() { }
@@ -53,9 +77,19 @@ public class GSUtilWagon extends AbstractWagon implements CommandExecutor {
         fireGetStarted(resource, target);
 
         try {
-            cp(getRepository().getUrl() + source, target);
-        } catch (CommandExecutionException exception) {
-            fireTransferError(resource, exception, TransferEvent.REQUEST_GET);
+            bucket.get(source)
+                .downloadTo(target.toPath());
+        } catch (Exception exception) {
+            if (exception instanceof TransferFailedException) {
+                throw (TransferFailedException) exception;
+            } else if (exception instanceof ResourceDoesNotExistException) {
+                throw (ResourceDoesNotExistException) exception;
+            } else if (exception instanceof AuthorizationException) {
+                throw (AuthorizationException) exception;
+            } else {
+                throw new TransferFailedException(source + " -> " + target,
+                                                  exception);
+            }
         }
 
         postProcessListeners(resource, target, TransferEvent.REQUEST_GET);
@@ -80,24 +114,46 @@ public class GSUtilWagon extends AbstractWagon implements CommandExecutor {
                     String target) throws TransferFailedException,
                                           ResourceDoesNotExistException,
                                           AuthorizationException {
+        if (! source.exists()) {
+            throw new ResourceDoesNotExistException(source.getAbsolutePath());
+        }
+
         Resource resource = new Resource(target);
 
         resource.setContentLength(source.length());
         resource.setLastModified(source.lastModified());
 
         firePutInitiated(resource, source);
-
-        if (! source.exists()) {
-            throw new ResourceDoesNotExistException("Specified source file does not exist: "
-                                                    + source);
-        }
-
         firePutStarted(resource, source);
 
         try {
-            cp(source, getRepository().getUrl() + target);
-        } catch (CommandExecutionException exception) {
-            fireTransferError(resource, exception, TransferEvent.REQUEST_PUT);
+            Blob blob = bucket.get(target);
+
+            if (blob == null) {
+                blob = bucket.create(target, new byte[] { });
+            }
+
+            try (FileChannel reader = FileChannel.open(source.toPath(), READ);
+                 WritableByteChannel writer = blob.writer()) {
+                long size = reader.size();
+                long position = 0;
+                long count = 1024 * 1024;
+
+                while (position < size) {
+                    position += reader.transferTo(position, count, writer);
+                }
+            }
+        } catch (Exception exception) {
+            if (exception instanceof TransferFailedException) {
+                throw (TransferFailedException) exception;
+            } else if (exception instanceof ResourceDoesNotExistException) {
+                throw (ResourceDoesNotExistException) exception;
+            } else if (exception instanceof AuthorizationException) {
+                throw (AuthorizationException) exception;
+            } else {
+                throw new TransferFailedException(source + " -> " + target,
+                                                  exception);
+            }
         }
 
         postProcessListeners(resource, source, TransferEvent.REQUEST_PUT);
@@ -109,83 +165,9 @@ public class GSUtilWagon extends AbstractWagon implements CommandExecutor {
                              String target) throws TransferFailedException,
                                                    ResourceDoesNotExistException,
                                                    AuthorizationException {
-        try {
-            cp(source,
-               getRepository().getUrl() + target);
-        } catch (CommandExecutionException exception) {
-            throw new TransferFailedException(exception.getMessage(),
-                                              exception);
-        }
+        throw new IllegalStateException();
     }
 
     @Override
-    public boolean supportsDirectoryCopy() { return true; }
-
-    private void cp(File source,
-                    String target) throws CommandExecutionException {
-        cp(source.getAbsolutePath(), target);
-    }
-
-    private void cp(String source,
-                    File target) throws CommandExecutionException,
-                                        TransferFailedException {
-        createParentDirectories(target);
-        cp(source, target.getAbsolutePath());
-    }
-
-    private void cp(String source,
-                    String target) throws CommandExecutionException {
-        Commandline cl = new Commandline();
-
-        cl.setExecutable("gsutil");
-        cl.addArguments(new String[] {
-                            "-m", "cp", "-n", "-r", source, target
-                        });
-
-        executeCommand(CommandLineUtils.toString(cl.getCommandline()));
-    }
-
-    @Override
-    public void executeCommand(String command) throws CommandExecutionException {
-        fireTransferDebug("Executing command: " + command);
-        executeCommand(command, false);
-    }
-
-    @Override
-    public Streams executeCommand(String command,
-                                  boolean ignoreFailures) throws CommandExecutionException {
-        Streams streams = null;
-        Commandline cl = new Commandline(command);
-
-        fireSessionDebug("Executing command: " + cl.toString());
-
-        try {
-            CommandLineUtils.StringStreamConsumer out =
-                new CommandLineUtils.StringStreamConsumer();
-            CommandLineUtils.StringStreamConsumer err =
-                new CommandLineUtils.StringStreamConsumer();
-            int exitCode = CommandLineUtils.executeCommandLine(cl, out, err);
-
-            streams = new Streams();
-            streams.setOut(out.getOutput());
-            streams.setErr(err.getOutput());
-
-            fireSessionDebug(streams.getOut());
-            fireSessionDebug(streams.getErr());
-
-            if (exitCode != 0) {
-                if (! ignoreFailures || exitCode != 0) {
-                    throw new CommandExecutionException("Exit code "
-                                                        + exitCode + " - "
-                                                        + err.getOutput());
-                }
-            }
-        } catch (CommandLineException exception) {
-            throw new CommandExecutionException("Error executing command line: "
-                                                + command,
-                                                exception);
-        }
-
-        return streams;
-    }
+    public boolean supportsDirectoryCopy() { return false; }
 }
