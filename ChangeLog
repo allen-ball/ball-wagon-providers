@@ -1,5 +1,7 @@
 2020-01-24  Allen D. Ball  <ball@hcf.dev>
 
+	* pom.xml: Released version 1.0.0.
+
 	* src/main/java/ball/maven/wagon/providers/GSUtilWagon.java:
 	Re-implemented with com.google.cloud.storage.Storage.
 
