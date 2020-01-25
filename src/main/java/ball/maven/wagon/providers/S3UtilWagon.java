@@ -12,6 +12,7 @@ import com.amazonaws.regions.DefaultAwsRegionProviderChain;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import java.io.File;
@@ -130,12 +131,20 @@ public class S3UtilWagon extends AbstractWagon {
                               long timestamp) throws TransferFailedException,
                                                      ResourceDoesNotExistException,
                                                      AuthorizationException {
-        fireSessionDebug("getIfNewer in "
-                         + getClass().getSimpleName()
-                         + " is not supported - performing an unconditional get");
-        get(source, target);
+        boolean newer = false;
+        ObjectMetadata metadata =
+            manager.getAmazonS3Client()
+            .getObjectMetadata(bucket.getName(), source);
 
-        return true;
+        if (metadata != null) {
+            newer = metadata.getLastModified().getTime() > timestamp;
+        }
+
+        if (newer) {
+            get(source, target);
+        }
+
+        return newer;
     }
 
     @Override
@@ -181,4 +190,26 @@ public class S3UtilWagon extends AbstractWagon {
 
     @Override
     public boolean supportsDirectoryCopy() { return false; }
+
+    @Override
+    public boolean resourceExists(String name) throws TransferFailedException,
+                                                      AuthorizationException {
+        boolean exists = false;
+
+        try {
+            exists =
+                manager.getAmazonS3Client()
+                .doesObjectExist(bucket.getName(), name);
+        } catch (Exception exception) {
+            if (exception instanceof TransferFailedException) {
+                throw (TransferFailedException) exception;
+            } else if (exception instanceof AuthorizationException) {
+                throw (AuthorizationException) exception;
+            } else {
+                throw new TransferFailedException(name, exception);
+            }
+        }
+
+        return exists;
+    }
 }

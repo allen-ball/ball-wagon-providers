@@ -108,12 +108,18 @@ public class GSUtilWagon extends AbstractWagon {
                               long timestamp) throws TransferFailedException,
                                                      ResourceDoesNotExistException,
                                                      AuthorizationException {
-        fireSessionDebug("getIfNewer in "
-                         + getClass().getSimpleName()
-                         + " is not supported - performing an unconditional get");
-        get(source, target);
+        boolean newer = false;
+        Blob blob = bucket.get(source);
 
-        return true;
+        if (blob != null) {
+            newer = blob.getUpdateTime() > timestamp;
+        }
+
+        if (newer) {
+            get(source, target);
+        }
+
+        return newer;
     }
 
     @Override
@@ -187,4 +193,10 @@ public class GSUtilWagon extends AbstractWagon {
 
     @Override
     public boolean supportsDirectoryCopy() { return false; }
+
+    @Override
+    public boolean resourceExists(String name) throws TransferFailedException,
+                                                      AuthorizationException {
+        return bucket.get(name) != null;
+    }
 }

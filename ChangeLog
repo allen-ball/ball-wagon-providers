@@ -1,3 +1,10 @@
+2020-01-25  Allen D. Ball  <ball@hcf.dev>
+
+	* src/main/java/ball/maven/wagon/providers/GSUtilWagon.java,
+	src/main/java/ball/maven/wagon/providers/S3UtilWagon.java:
+	Implemented getIfNewer(String,File,long) and
+	resourceExists(String) methods.
+
 2020-01-24  Allen D. Ball  <ball@hcf.dev>
 
 	* pom.xml: Released version 1.0.0.
