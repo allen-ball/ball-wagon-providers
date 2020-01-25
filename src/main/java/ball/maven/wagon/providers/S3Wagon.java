@@ -1,20 +1,22 @@
 /*
  * $Id$
  *
- * Copyright 2017 - 2020 Allen D. Ball.  All rights reserved.
+ * Copyright 2020 Allen D. Ball.  All rights reserved.
  */
 package ball.maven.wagon.providers;
 
-import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.Bucket;
-import com.google.cloud.storage.StorageOptions;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.regions.AwsRegionProvider;
+import com.amazonaws.regions.DefaultAwsRegionProviderChain;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.transfer.TransferManager;
+import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.spi.FileTypeDetector;
-import java.util.Iterator;
-import java.util.ServiceLoader;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.maven.wagon.AbstractWagon;
@@ -27,21 +29,17 @@ import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.resource.Resource;
 import org.codehaus.plexus.component.annotations.Component;
 
-import static java.nio.file.StandardOpenOption.READ;
-
 /**
- * Google Storage {@link Wagon} implementation.
+ * AWS S3 {@link Wagon} implementation.
  *
  * @author {@link.uri mailto:ball@hcf.dev Allen D. Ball}
  * @version $Revision$
  */
-@Component(hint = "gs", role = Wagon.class, instantiationStrategy = "per-lookup")
+@Component(hint = "s3", role = Wagon.class, instantiationStrategy = "per-lookup")
 @NoArgsConstructor @ToString
-public class GSUtilWagon extends AbstractWagon {
-    private ServiceLoader<FileTypeDetector> loader =
-        ServiceLoader.load(FileTypeDetector.class,
-                           getClass().getClassLoader());
+public class S3Wagon extends AbstractWagon {
     private volatile Bucket bucket = null;
+    private volatile TransferManager manager = null;
 
     @Override
     protected void openConnectionInternal() throws AuthenticationException {
@@ -49,15 +47,29 @@ public class GSUtilWagon extends AbstractWagon {
             if (bucket == null) {
                 synchronized (this) {
                     if (bucket == null) {
+                        AWSCredentialsProvider credentials =
+                            new DefaultAWSCredentialsProviderChain();
+                        AwsRegionProvider region =
+                            new DefaultAwsRegionProviderChain();
+                        AmazonS3 client =
+                            AmazonS3ClientBuilder.standard()
+                            .withCredentials(credentials)
+                            .withRegion(region.getRegion())
+                            .build();
+                        String name = getRepository().getHost();
+
                         bucket =
-                            StorageOptions.getDefaultInstance().getService()
-                            .get(getRepository().getHost());
+                            client.listBuckets()
+                            .stream()
+                            .filter(t -> name.equals(t.getName()))
+                            .findFirst()
+                            .orElseThrow(() -> new ResourceDoesNotExistException(getRepository().toString()));
+                        manager =
+                            TransferManagerBuilder.standard()
+                            .withS3Client(client)
+                            .build();
                     }
                 }
-            }
-
-            if (bucket == null) {
-                throw new ResourceDoesNotExistException(getRepository().toString());
             }
         } catch (Exception exception) {
             if (exception instanceof AuthenticationException) {
@@ -70,7 +82,18 @@ public class GSUtilWagon extends AbstractWagon {
     }
 
     @Override
-    public void closeConnection() { }
+    public void closeConnection() {
+        TransferManager manager = null;
+
+        synchronized (this) {
+            manager = this.manager;
+            this.manager = null;
+        }
+
+        if (manager != null) {
+            manager.shutdownNow();
+        }
+    }
 
     @Override
     public void get(String source,
@@ -84,8 +107,8 @@ public class GSUtilWagon extends AbstractWagon {
         fireGetStarted(resource, target);
 
         try {
-            bucket.get(source)
-                .downloadTo(target.toPath());
+            manager.download(bucket.getName(), source, target)
+                .waitForCompletion();
         } catch (Exception exception) {
             if (exception instanceof TransferFailedException) {
                 throw (TransferFailedException) exception;
@@ -109,10 +132,12 @@ public class GSUtilWagon extends AbstractWagon {
                                                      ResourceDoesNotExistException,
                                                      AuthorizationException {
         boolean newer = false;
-        Blob blob = bucket.get(source);
+        ObjectMetadata metadata =
+            manager.getAmazonS3Client()
+            .getObjectMetadata(bucket.getName(), source);
 
-        if (blob != null) {
-            newer = blob.getUpdateTime() > timestamp;
+        if (metadata != null) {
+            newer = metadata.getLastModified().getTime() > timestamp;
         }
 
         if (newer) {
@@ -136,17 +161,8 @@ public class GSUtilWagon extends AbstractWagon {
         firePutStarted(resource, source);
 
         try {
-            Blob blob = bucket.get(target);
-
-            if (blob != null) {
-                blob.delete();
-            }
-
-            try (FileInputStream in = new FileInputStream(source)) {
-                String type = probeContentType(source.toPath());
-
-                blob = bucket.create(target, in, type);
-            }
+            manager.upload(bucket.getName(), target, source)
+                .waitForCompletion();
         } catch (Exception exception) {
             if (exception instanceof TransferFailedException) {
                 throw (TransferFailedException) exception;
@@ -164,25 +180,6 @@ public class GSUtilWagon extends AbstractWagon {
         firePutCompleted(resource, source);
     }
 
-    private String probeContentType(Path path) {
-        String type = null;
-
-        for (Iterator<FileTypeDetector> iterator =
-                 loader.iterator(); iterator.hasNext(); ) {
-            try {
-                type = iterator.next().probeContentType(path);
-
-                if (type != null) {
-                    break;
-                }
-            } catch (IOException exception) {
-                continue;
-            }
-        }
-
-        return type;
-    }
-
     @Override
     public void putDirectory(File source,
                              String target) throws TransferFailedException,
@@ -197,6 +194,22 @@ public class GSUtilWagon extends AbstractWagon {
     @Override
     public boolean resourceExists(String name) throws TransferFailedException,
                                                       AuthorizationException {
-        return bucket.get(name) != null;
+        boolean exists = false;
+
+        try {
+            exists =
+                manager.getAmazonS3Client()
+                .doesObjectExist(bucket.getName(), name);
+        } catch (Exception exception) {
+            if (exception instanceof TransferFailedException) {
+                throw (TransferFailedException) exception;
+            } else if (exception instanceof AuthorizationException) {
+                throw (AuthorizationException) exception;
+            } else {
+                throw new TransferFailedException(name, exception);
+            }
+        }
+
+        return exists;
     }
 }

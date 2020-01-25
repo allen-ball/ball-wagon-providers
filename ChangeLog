@@ -1,7 +1,7 @@
 2020-01-25  Allen D. Ball  <ball@hcf.dev>
 
-	* src/main/java/ball/maven/wagon/providers/GSUtilWagon.java,
-	src/main/java/ball/maven/wagon/providers/S3UtilWagon.java:
+	* src/main/java/ball/maven/wagon/providers/GSWagon.java,
+	src/main/java/ball/maven/wagon/providers/S3Wagon.java:
 	Implemented getIfNewer(String,File,long) and
 	resourceExists(String) methods.
 
@@ -9,18 +9,18 @@
 
 	* pom.xml: Released version 1.0.0.
 
-	* src/main/java/ball/maven/wagon/providers/GSUtilWagon.java:
+	* src/main/java/ball/maven/wagon/providers/GSWagon.java:
 	Re-implemented with com.google.cloud.storage.Storage.
 
 2020-01-23  Allen D. Ball  <ball@hcf.dev>
 
-	* src/main/java/ball/maven/wagon/providers/S3UtilWagon.java:
+	* src/main/java/ball/maven/wagon/providers/S3Wagon.java:
 	Initial writing.
 
 2017-07-09  Allen D. Ball  <ball@sol.local>
 
 	* Removed dependency on ball:ball-util.
 
-	* src/main/java/ball/maven/wagon/providers/GSUtilWagon.java:
+	* src/main/java/ball/maven/wagon/providers/GSWagon.java:
 	Initial writing.
 
