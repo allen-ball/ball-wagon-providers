@@ -9,8 +9,12 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.StorageOptions;
 import java.io.File;
-import java.nio.channels.FileChannel;
-import java.nio.channels.WritableByteChannel;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.spi.FileTypeDetector;
+import java.util.Iterator;
+import java.util.ServiceLoader;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.maven.wagon.AbstractWagon;
@@ -34,6 +38,9 @@ import static java.nio.file.StandardOpenOption.READ;
 @Component(hint = "gs", role = Wagon.class, instantiationStrategy = "per-lookup")
 @NoArgsConstructor @ToString
 public class GSUtilWagon extends AbstractWagon {
+    private ServiceLoader<FileTypeDetector> loader =
+        ServiceLoader.load(FileTypeDetector.class,
+                           getClass().getClassLoader());
     private volatile Bucket bucket = null;
 
     @Override
@@ -114,10 +121,6 @@ public class GSUtilWagon extends AbstractWagon {
                     String target) throws TransferFailedException,
                                           ResourceDoesNotExistException,
                                           AuthorizationException {
-        if (! source.exists()) {
-            throw new ResourceDoesNotExistException(source.getAbsolutePath());
-        }
-
         Resource resource = new Resource(target);
 
         resource.setContentLength(source.length());
@@ -129,19 +132,14 @@ public class GSUtilWagon extends AbstractWagon {
         try {
             Blob blob = bucket.get(target);
 
-            if (blob == null) {
-                blob = bucket.create(target, new byte[] { });
+            if (blob != null) {
+                blob.delete();
             }
 
-            try (FileChannel reader = FileChannel.open(source.toPath(), READ);
-                 WritableByteChannel writer = blob.writer()) {
-                long size = reader.size();
-                long position = 0;
-                long count = 1024 * 1024;
+            try (FileInputStream in = new FileInputStream(source)) {
+                String type = probeContentType(source.toPath());
 
-                while (position < size) {
-                    position += reader.transferTo(position, count, writer);
-                }
+                blob = bucket.create(target, in, type);
             }
         } catch (Exception exception) {
             if (exception instanceof TransferFailedException) {
@@ -158,6 +156,25 @@ public class GSUtilWagon extends AbstractWagon {
 
         postProcessListeners(resource, source, TransferEvent.REQUEST_PUT);
         firePutCompleted(resource, source);
+    }
+
+    private String probeContentType(Path path) {
+        String type = null;
+
+        for (Iterator<FileTypeDetector> iterator =
+                 loader.iterator(); iterator.hasNext(); ) {
+            try {
+                type = iterator.next().probeContentType(path);
+
+                if (type != null) {
+                    break;
+                }
+            } catch (IOException exception) {
+                continue;
+            }
+        }
+
+        return type;
     }
 
     @Override

@@ -143,10 +143,6 @@ public class S3UtilWagon extends AbstractWagon {
                     String target) throws TransferFailedException,
                                           ResourceDoesNotExistException,
                                           AuthorizationException {
-        if (! source.exists()) {
-            throw new ResourceDoesNotExistException(source.getAbsolutePath());
-        }
-
         Resource resource = new Resource(target);
 
         resource.setContentLength(source.length());
