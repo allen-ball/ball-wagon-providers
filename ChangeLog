@@ -1,5 +1,8 @@
 2020-01-25  Allen D. Ball  <ball@hcf.dev>
 
+	* src/main/java/ball/maven/wagon/providers/AbstractWagonProvider.java:
+	Initial writing; re-factored GSWagon and S3Wagon.
+
 	* src/main/java/ball/maven/wagon/providers/GSWagon.java,
 	src/main/java/ball/maven/wagon/providers/S3Wagon.java:
 	Implemented getIfNewer(String,File,long) and

@@ -10,14 +10,8 @@ import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.StorageOptions;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.spi.FileTypeDetector;
-import java.util.Iterator;
-import java.util.ServiceLoader;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.apache.maven.wagon.AbstractWagon;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
 import org.apache.maven.wagon.TransferFailedException;
 import org.apache.maven.wagon.Wagon;
@@ -27,8 +21,6 @@ import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.resource.Resource;
 import org.codehaus.plexus.component.annotations.Component;
 
-import static java.nio.file.StandardOpenOption.READ;
-
 /**
  * Google Storage {@link Wagon} implementation.
  *
@@ -37,10 +29,7 @@ import static java.nio.file.StandardOpenOption.READ;
  */
 @Component(hint = "gs", role = Wagon.class, instantiationStrategy = "per-lookup")
 @NoArgsConstructor @ToString
-public class GSWagon extends AbstractWagon {
-    private ServiceLoader<FileTypeDetector> loader =
-        ServiceLoader.load(FileTypeDetector.class,
-                           getClass().getClassLoader());
+public class GSWagon extends AbstractWagonProvider {
     private volatile Bucket bucket = null;
 
     @Override
@@ -143,7 +132,7 @@ public class GSWagon extends AbstractWagon {
             }
 
             try (FileInputStream in = new FileInputStream(source)) {
-                String type = probeContentType(source.toPath());
+                String type = probeContentType(source);
 
                 blob = bucket.create(target, in, type);
             }
@@ -163,36 +152,6 @@ public class GSWagon extends AbstractWagon {
         postProcessListeners(resource, source, TransferEvent.REQUEST_PUT);
         firePutCompleted(resource, source);
     }
-
-    private String probeContentType(Path path) {
-        String type = null;
-
-        for (Iterator<FileTypeDetector> iterator =
-                 loader.iterator(); iterator.hasNext(); ) {
-            try {
-                type = iterator.next().probeContentType(path);
-
-                if (type != null) {
-                    break;
-                }
-            } catch (IOException exception) {
-                continue;
-            }
-        }
-
-        return type;
-    }
-
-    @Override
-    public void putDirectory(File source,
-                             String target) throws TransferFailedException,
-                                                   ResourceDoesNotExistException,
-                                                   AuthorizationException {
-        throw new IllegalStateException();
-    }
-
-    @Override
-    public boolean supportsDirectoryCopy() { return false; }
 
     @Override
     public boolean resourceExists(String name) throws TransferFailedException,

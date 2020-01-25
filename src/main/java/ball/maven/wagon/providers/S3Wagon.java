@@ -16,10 +16,8 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import java.io.File;
-import java.io.IOException;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.apache.maven.wagon.AbstractWagon;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
 import org.apache.maven.wagon.TransferFailedException;
 import org.apache.maven.wagon.Wagon;
@@ -37,7 +35,7 @@ import org.codehaus.plexus.component.annotations.Component;
  */
 @Component(hint = "s3", role = Wagon.class, instantiationStrategy = "per-lookup")
 @NoArgsConstructor @ToString
-public class S3Wagon extends AbstractWagon {
+public class S3Wagon extends AbstractWagonProvider {
     private volatile Bucket bucket = null;
     private volatile TransferManager manager = null;
 
@@ -179,17 +177,6 @@ public class S3Wagon extends AbstractWagon {
         postProcessListeners(resource, source, TransferEvent.REQUEST_PUT);
         firePutCompleted(resource, source);
     }
-
-    @Override
-    public void putDirectory(File source,
-                             String target) throws TransferFailedException,
-                                                   ResourceDoesNotExistException,
-                                                   AuthorizationException {
-        throw new IllegalStateException();
-    }
-
-    @Override
-    public boolean supportsDirectoryCopy() { return false; }
 
     @Override
     public boolean resourceExists(String name) throws TransferFailedException,
