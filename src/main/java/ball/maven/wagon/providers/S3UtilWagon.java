@@ -11,6 +11,7 @@ import com.amazonaws.regions.AwsRegionProvider;
 import com.amazonaws.regions.DefaultAwsRegionProviderChain;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import java.io.File;
@@ -36,28 +37,45 @@ import org.codehaus.plexus.component.annotations.Component;
 @Component(hint = "s3", role = Wagon.class, instantiationStrategy = "per-lookup")
 @NoArgsConstructor @ToString
 public class S3UtilWagon extends AbstractWagon {
+    private volatile Bucket bucket = null;
     private volatile TransferManager manager = null;
 
     @Override
     protected void openConnectionInternal() throws AuthenticationException {
-        if (manager == null) {
-            synchronized (this) {
-                if (manager == null) {
-                    AWSCredentialsProvider credentials =
-                        new DefaultAWSCredentialsProviderChain();
-                    AwsRegionProvider region =
-                        new DefaultAwsRegionProviderChain();
-                    AmazonS3 client =
-                        AmazonS3ClientBuilder.standard()
-                        .withCredentials(credentials)
-                        .withRegion(region.getRegion())
-                        .build();
+        try {
+            if (bucket == null) {
+                synchronized (this) {
+                    if (bucket == null) {
+                        AWSCredentialsProvider credentials =
+                            new DefaultAWSCredentialsProviderChain();
+                        AwsRegionProvider region =
+                            new DefaultAwsRegionProviderChain();
+                        AmazonS3 client =
+                            AmazonS3ClientBuilder.standard()
+                            .withCredentials(credentials)
+                            .withRegion(region.getRegion())
+                            .build();
+                        String name = getRepository().getHost();
 
-                    manager =
-                        TransferManagerBuilder.standard()
-                        .withS3Client(client)
-                        .build();
+                        bucket =
+                            client.listBuckets()
+                            .stream()
+                            .filter(t -> name.equals(t.getName()))
+                            .findFirst()
+                            .orElseThrow(() -> new ResourceDoesNotExistException(getRepository().toString()));
+                        manager =
+                            TransferManagerBuilder.standard()
+                            .withS3Client(client)
+                            .build();
+                    }
                 }
+            }
+        } catch (Exception exception) {
+            if (exception instanceof AuthenticationException) {
+                throw (AuthenticationException) exception;
+            } else {
+                throw new AuthenticationException(getRepository().toString(),
+                                                  exception);
             }
         }
     }
@@ -88,11 +106,19 @@ public class S3UtilWagon extends AbstractWagon {
         fireGetStarted(resource, target);
 
         try {
-            manager.download(getRepository().getHost(), source, target)
+            manager.download(bucket.getName(), source, target)
                 .waitForCompletion();
-        } catch (InterruptedException exception) {
-            throw new TransferFailedException(source + " -> " + target,
-                                              exception);
+        } catch (Exception exception) {
+            if (exception instanceof TransferFailedException) {
+                throw (TransferFailedException) exception;
+            } else if (exception instanceof ResourceDoesNotExistException) {
+                throw (ResourceDoesNotExistException) exception;
+            } else if (exception instanceof AuthorizationException) {
+                throw (AuthorizationException) exception;
+            } else {
+                throw new TransferFailedException(source + " -> " + target,
+                                                  exception);
+            }
         }
 
         postProcessListeners(resource, target, TransferEvent.REQUEST_GET);
@@ -130,11 +156,19 @@ public class S3UtilWagon extends AbstractWagon {
         firePutStarted(resource, source);
 
         try {
-            manager.upload(getRepository().getHost(), target, source)
+            manager.upload(bucket.getName(), target, source)
                 .waitForCompletion();
-        } catch (InterruptedException exception) {
-            throw new TransferFailedException(source + " -> " + target,
-                                              exception);
+        } catch (Exception exception) {
+            if (exception instanceof TransferFailedException) {
+                throw (TransferFailedException) exception;
+            } else if (exception instanceof ResourceDoesNotExistException) {
+                throw (ResourceDoesNotExistException) exception;
+            } else if (exception instanceof AuthorizationException) {
+                throw (AuthorizationException) exception;
+            } else {
+                throw new TransferFailedException(source + " -> " + target,
+                                                  exception);
+            }
         }
 
         postProcessListeners(resource, source, TransferEvent.REQUEST_PUT);
