@@ -18,9 +18,7 @@
   </parent>
   <properties>
     <jre.version>1.8</jre.version>
-    <maven.source.skip>true</maven.source.skip>
     <maven.javadoc.skip>true</maven.javadoc.skip>
-    <maven.site.skip>true</maven.site.skip>
   </properties>
   <dependencies verbose="true">
     <dependency>
@@ -32,26 +30,24 @@
       <artifactId>google-cloud-storage</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.codehaus.plexus</groupId>
-      <artifactId>plexus-utils</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.codehaus.plexus</groupId>
-      <artifactId>plexus-component-annotations</artifactId>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
       <scope>provided</scope>
-      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.maven.wagon</groupId>
       <artifactId>wagon-provider-api</artifactId>
       <scope>provided</scope>
-      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.tika</groupId>
       <artifactId>tika-java7</artifactId>
       <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-component-annotations</artifactId>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
   <build>

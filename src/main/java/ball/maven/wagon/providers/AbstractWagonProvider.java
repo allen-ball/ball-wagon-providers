@@ -19,7 +19,7 @@ import org.apache.maven.wagon.authorization.AuthorizationException;
 import static lombok.AccessLevel.PROTECTED;
 
 /**
- * Google Storage {@link Wagon} implementation.
+ * Google Storage {@link org.apache.maven.wagon.Wagon} implementation.
  *
  * @author {@link.uri mailto:ball@hcf.dev Allen D. Ball}
  * @version $Revision$
