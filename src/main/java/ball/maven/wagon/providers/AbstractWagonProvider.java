@@ -19,7 +19,8 @@ import org.apache.maven.wagon.authorization.AuthorizationException;
 import static lombok.AccessLevel.PROTECTED;
 
 /**
- * Google Storage {@link org.apache.maven.wagon.Wagon} implementation.
+ * Abstract {@link org.apache.maven.wagon.Wagon} which provides a
+ * {@link #probeContentType(File)} method.
  *
  * @author {@link.uri mailto:ball@hcf.dev Allen D. Ball}
  * @version $Revision$
