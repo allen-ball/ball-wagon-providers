@@ -83,7 +83,7 @@ public class GSWagon extends AbstractWagonProvider {
             } else if (exception instanceof AuthorizationException) {
                 throw (AuthorizationException) exception;
             } else {
-                throw new TransferFailedException(source + " -> " + target,
+                throw new TransferFailedException(target + " <- " + source,
                                                   exception);
             }
         }
