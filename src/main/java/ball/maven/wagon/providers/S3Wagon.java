@@ -27,6 +27,10 @@ import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.resource.Resource;
 import org.codehaus.plexus.component.annotations.Component;
 
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.apache.commons.lang3.StringUtils.strip;
+
 /**
  * AWS S3 {@link Wagon} implementation.
  *
@@ -37,7 +41,8 @@ import org.codehaus.plexus.component.annotations.Component;
 @NoArgsConstructor @ToString
 public class S3Wagon extends AbstractWagonProvider {
     private volatile Bucket bucket = null;
-    private volatile TransferManager manager = null;
+    private String prefix = null;
+    private TransferManager manager = null;
 
     @Override
     protected void openConnectionInternal() throws AuthenticationException {
@@ -62,6 +67,12 @@ public class S3Wagon extends AbstractWagonProvider {
                             .filter(t -> name.equals(t.getName()))
                             .findFirst()
                             .orElseThrow(() -> new ResourceDoesNotExistException(getRepository().toString()));
+
+                        String basedir =
+                            strip(getRepository().getBasedir(), "/");
+
+                        prefix = isNotEmpty(basedir) ? (basedir + "/") : EMPTY;
+
                         manager =
                             TransferManagerBuilder.standard()
                             .withS3Client(client)
@@ -105,7 +116,7 @@ public class S3Wagon extends AbstractWagonProvider {
         fireGetStarted(resource, target);
 
         try {
-            manager.download(bucket.getName(), source, target)
+            manager.download(bucket.getName(), prefix + source, target)
                 .waitForCompletion();
         } catch (Exception exception) {
             if (exception instanceof TransferFailedException) {
@@ -132,7 +143,7 @@ public class S3Wagon extends AbstractWagonProvider {
         boolean newer = false;
         ObjectMetadata metadata =
             manager.getAmazonS3Client()
-            .getObjectMetadata(bucket.getName(), source);
+            .getObjectMetadata(bucket.getName(), prefix + source);
 
         if (metadata != null) {
             newer = metadata.getLastModified().getTime() > timestamp;
@@ -159,7 +170,7 @@ public class S3Wagon extends AbstractWagonProvider {
         firePutStarted(resource, source);
 
         try {
-            manager.upload(bucket.getName(), target, source)
+            manager.upload(bucket.getName(), prefix + target, source)
                 .waitForCompletion();
         } catch (Exception exception) {
             if (exception instanceof TransferFailedException) {
@@ -186,7 +197,7 @@ public class S3Wagon extends AbstractWagonProvider {
         try {
             exists =
                 manager.getAmazonS3Client()
-                .doesObjectExist(bucket.getName(), name);
+                .doesObjectExist(bucket.getName(), prefix + name);
         } catch (Exception exception) {
             if (exception instanceof TransferFailedException) {
                 throw (TransferFailedException) exception;

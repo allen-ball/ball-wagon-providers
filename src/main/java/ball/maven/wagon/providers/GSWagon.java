@@ -21,6 +21,10 @@ import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.resource.Resource;
 import org.codehaus.plexus.component.annotations.Component;
 
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.apache.commons.lang3.StringUtils.strip;
+
 /**
  * Google Storage {@link Wagon} implementation.
  *
@@ -31,6 +35,7 @@ import org.codehaus.plexus.component.annotations.Component;
 @NoArgsConstructor @ToString
 public class GSWagon extends AbstractWagonProvider {
     private volatile Bucket bucket = null;
+    private String prefix = null;
 
     @Override
     protected void openConnectionInternal() throws AuthenticationException {
@@ -41,6 +46,11 @@ public class GSWagon extends AbstractWagonProvider {
                         bucket =
                             StorageOptions.getDefaultInstance().getService()
                             .get(getRepository().getHost());
+
+                        String basedir =
+                            strip(getRepository().getBasedir(), "/");
+
+                        prefix = isNotEmpty(basedir) ? (basedir + "/") : EMPTY;
                     }
                 }
             }
@@ -73,7 +83,7 @@ public class GSWagon extends AbstractWagonProvider {
         fireGetStarted(resource, target);
 
         try {
-            bucket.get(source)
+            bucket.get(prefix + source)
                 .downloadTo(target.toPath());
         } catch (Exception exception) {
             if (exception instanceof TransferFailedException) {
@@ -98,7 +108,7 @@ public class GSWagon extends AbstractWagonProvider {
                                                      ResourceDoesNotExistException,
                                                      AuthorizationException {
         boolean newer = false;
-        Blob blob = bucket.get(source);
+        Blob blob = bucket.get(prefix + source);
 
         if (blob != null) {
             newer = blob.getUpdateTime() > timestamp;
@@ -125,7 +135,7 @@ public class GSWagon extends AbstractWagonProvider {
         firePutStarted(resource, source);
 
         try {
-            Blob blob = bucket.get(target);
+            Blob blob = bucket.get(prefix + target);
 
             if (blob != null) {
                 blob.delete();
@@ -134,7 +144,7 @@ public class GSWagon extends AbstractWagonProvider {
             try (FileInputStream in = new FileInputStream(source)) {
                 String type = probeContentType(source);
 
-                blob = bucket.create(target, in, type);
+                blob = bucket.create(prefix + target, in, type);
             }
         } catch (Exception exception) {
             if (exception instanceof TransferFailedException) {
@@ -156,6 +166,6 @@ public class GSWagon extends AbstractWagonProvider {
     @Override
     public boolean resourceExists(String name) throws TransferFailedException,
                                                       AuthorizationException {
-        return bucket.get(name) != null;
+        return bucket.get(prefix + name) != null;
     }
 }
