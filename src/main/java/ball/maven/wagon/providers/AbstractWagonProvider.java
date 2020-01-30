@@ -17,6 +17,9 @@ import org.apache.maven.wagon.TransferFailedException;
 import org.apache.maven.wagon.authorization.AuthorizationException;
 
 import static lombok.AccessLevel.PROTECTED;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.apache.commons.lang3.StringUtils.strip;
 
 /**
  * Abstract {@link org.apache.maven.wagon.Wagon} which provides a
@@ -27,9 +30,26 @@ import static lombok.AccessLevel.PROTECTED;
  */
 @NoArgsConstructor(access = PROTECTED)
 public abstract class AbstractWagonProvider extends AbstractWagon {
+    private String prefix = null;
     private ServiceLoader<FileTypeDetector> loader =
         ServiceLoader.load(FileTypeDetector.class,
                            getClass().getClassLoader());
+
+    /**
+     * Method to calculate bucket key prefix from
+     * {@code getRepository().getBasedir()}.
+     *
+     * @return  The bucket key prefix.
+     */
+    protected String prefix() {
+        if (prefix == null) {
+            String basedir = strip(getRepository().getBasedir(), "/");
+
+            prefix = isNotEmpty(basedir) ? (basedir + "/") : EMPTY;
+        }
+
+        return prefix;
+    }
 
     /**
      * Provides functionality similar to
