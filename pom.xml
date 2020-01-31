@@ -8,12 +8,12 @@
   <name>Maven Wagon Providers</name>
   <groupId>ball</groupId>
   <artifactId>ball-wagon-providers</artifactId>
-  <version>1.0.0</version>
+  <version>2.0.0</version>
   <packaging>jar</packaging>
   <parent>
     <groupId>ball</groupId>
     <artifactId>parent</artifactId>
-    <version>20200117.0</version>
+    <version>20200130.0</version>
     <relativePath>../ball/parent/pom.xml</relativePath>
   </parent>
   <properties>
