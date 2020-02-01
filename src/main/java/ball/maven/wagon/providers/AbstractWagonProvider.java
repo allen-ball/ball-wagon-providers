@@ -31,6 +31,10 @@ import static org.apache.commons.lang3.StringUtils.strip;
  */
 @NoArgsConstructor(access = PROTECTED)
 public abstract class AbstractWagonProvider extends AbstractWagon {
+
+    /**
+     * {@link #DELIMITER} = {@value #DELIMITER}
+     */
     protected static final String DELIMITER = "/";
 
     private URI uri = null;
