@@ -55,7 +55,7 @@ public abstract class AbstractWagonProvider extends AbstractWagon {
 
     /**
      * Method to get host from a possibly opaque
-     * {@code getRepository().getBasedir()}.
+     * {@code getRepository().getHost()}.
      *
      * @return  The host.
      */
