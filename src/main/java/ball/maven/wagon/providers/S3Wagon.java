@@ -65,7 +65,7 @@ public class S3Wagon extends AbstractWagonProvider {
                             .withCredentials(credentials)
                             .withRegion(region.getRegion())
                             .build();
-                        String name = getRepository().getHost();
+                        String name = getHost();
 
                         bucket =
                             client.listBuckets()

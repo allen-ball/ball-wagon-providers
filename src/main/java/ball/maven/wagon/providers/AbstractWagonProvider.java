@@ -7,6 +7,7 @@ package ball.maven.wagon.providers;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.spi.FileTypeDetector;
 import java.util.Iterator;
 import java.util.ServiceLoader;
@@ -32,10 +33,41 @@ import static org.apache.commons.lang3.StringUtils.strip;
 public abstract class AbstractWagonProvider extends AbstractWagon {
     protected static final String DELIMITER = "/";
 
+    private URI uri = null;
     private String prefix = null;
     private ServiceLoader<FileTypeDetector> loader =
         ServiceLoader.load(FileTypeDetector.class,
                            getClass().getClassLoader());
+
+    private URI getURI() {
+        if (uri == null) {
+            URI ssp = URI.create(getRepository().getUrl());
+
+            if (ssp.isOpaque()) {
+                ssp = URI.create(ssp.getSchemeSpecificPart());
+            }
+
+            uri = ssp;
+        }
+
+        return uri;
+    }
+
+    /**
+     * Method to get host from a possibly opaque
+     * {@code getRepository().getBasedir()}.
+     *
+     * @return  The host.
+     */
+    protected String getHost() { return getURI().getHost(); }
+
+    /**
+     * Method to get path from a possibly opaque
+     * {@code getRepository().getBasedir()}.
+     *
+     * @return  The path.
+     */
+    protected String getPath() { return getURI().getPath(); }
 
     /**
      * Method to calculate bucket key prefix from
@@ -45,7 +77,7 @@ public abstract class AbstractWagonProvider extends AbstractWagon {
      */
     protected String prefix() {
         if (prefix == null) {
-            String basedir = strip(getRepository().getBasedir(), DELIMITER);
+            String basedir = strip(getPath(), DELIMITER);
 
             prefix = isNotEmpty(basedir) ? (basedir + DELIMITER) : EMPTY;
         }

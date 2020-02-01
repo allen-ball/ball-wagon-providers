@@ -49,7 +49,7 @@ public class GSWagon extends AbstractWagonProvider {
                     if (bucket == null) {
                         bucket =
                             StorageOptions.getDefaultInstance().getService()
-                            .get(getRepository().getHost());
+                            .get(getHost());
                     }
                 }
             }
