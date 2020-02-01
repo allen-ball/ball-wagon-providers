@@ -12,10 +12,15 @@ import com.amazonaws.regions.DefaultAwsRegionProviderChain;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.amazonaws.services.s3.transfer.TransferManagerBuilder;
 import java.io.File;
+import java.util.List;
+import java.util.TreeSet;
+import java.util.regex.Pattern;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
@@ -26,6 +31,12 @@ import org.apache.maven.wagon.authorization.AuthorizationException;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.resource.Resource;
 import org.codehaus.plexus.component.annotations.Component;
+
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.apache.commons.lang3.StringUtils.strip;
 
 /**
  * AWS S3 {@link Wagon} implementation.
@@ -202,5 +213,53 @@ public class S3Wagon extends AbstractWagonProvider {
         }
 
         return exists;
+    }
+
+    @Override
+    public List<String> getFileList(String name) throws TransferFailedException,
+                                                        ResourceDoesNotExistException,
+                                                        AuthorizationException {
+        TreeSet<String> set = new TreeSet<>();
+        String prefix = prefix();
+
+        name = strip(name, DELIMITER);
+
+        if (isNotEmpty(name)) {
+            prefix += name + DELIMITER;
+        }
+
+        try {
+            ObjectListing listing =
+                manager.getAmazonS3Client()
+                .listObjects(bucket.getName(), defaultIfEmpty(prefix, null));
+
+            for (;;) {
+                for (S3ObjectSummary summary : listing.getObjectSummaries()) {
+                    String key = summary.getKey().substring(prefix.length());
+                    String[] entries = key.split(Pattern.quote(DELIMITER), 2);
+
+                    set.add(entries[0]
+                            + ((entries.length > 1) ? DELIMITER : EMPTY));
+                }
+
+                if (listing.isTruncated()) {
+                    listing =
+                        manager.getAmazonS3Client()
+                        .listNextBatchOfObjects(listing);
+                } else {
+                    break;
+                }
+            }
+        } catch (Exception exception) {
+            if (exception instanceof TransferFailedException) {
+                throw (TransferFailedException) exception;
+            } else if (exception instanceof AuthorizationException) {
+                throw (AuthorizationException) exception;
+            } else {
+                throw new TransferFailedException(name, exception);
+            }
+        }
+
+        return set.stream().collect(toList());
     }
 }

@@ -30,6 +30,8 @@ import static org.apache.commons.lang3.StringUtils.strip;
  */
 @NoArgsConstructor(access = PROTECTED)
 public abstract class AbstractWagonProvider extends AbstractWagon {
+    protected static final String DELIMITER = "/";
+
     private String prefix = null;
     private ServiceLoader<FileTypeDetector> loader =
         ServiceLoader.load(FileTypeDetector.class,
@@ -43,9 +45,9 @@ public abstract class AbstractWagonProvider extends AbstractWagon {
      */
     protected String prefix() {
         if (prefix == null) {
-            String basedir = strip(getRepository().getBasedir(), "/");
+            String basedir = strip(getRepository().getBasedir(), DELIMITER);
 
-            prefix = isNotEmpty(basedir) ? (basedir + "/") : EMPTY;
+            prefix = isNotEmpty(basedir) ? (basedir + DELIMITER) : EMPTY;
         }
 
         return prefix;

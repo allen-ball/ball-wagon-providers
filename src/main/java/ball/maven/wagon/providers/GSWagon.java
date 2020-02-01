@@ -10,6 +10,9 @@ import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.StorageOptions;
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.List;
+import java.util.TreeSet;
+import java.util.regex.Pattern;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
@@ -20,6 +23,12 @@ import org.apache.maven.wagon.authorization.AuthorizationException;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.resource.Resource;
 import org.codehaus.plexus.component.annotations.Component;
+
+import static com.google.cloud.storage.Storage.BlobListOption;
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.apache.commons.lang3.StringUtils.strip;
 
 /**
  * Google Storage {@link Wagon} implementation.
@@ -161,5 +170,47 @@ public class GSWagon extends AbstractWagonProvider {
     public boolean resourceExists(String name) throws TransferFailedException,
                                                       AuthorizationException {
         return bucket.get(prefix() + name) != null;
+    }
+
+    @Override
+    public List<String> getFileList(String name) throws TransferFailedException,
+                                                        ResourceDoesNotExistException,
+                                                        AuthorizationException {
+        TreeSet<String> set = new TreeSet<>();
+        String prefix = prefix();
+
+        name = strip(name, DELIMITER);
+
+        if (isNotEmpty(name)) {
+            prefix += name + DELIMITER;
+        }
+
+        BlobListOption[] options = new BlobListOption[] {
+            BlobListOption.currentDirectory(),
+            BlobListOption.prefix(prefix)
+        };
+
+        try {
+            for (Blob blob : bucket.list(options).iterateAll()) {
+                String key = blob.getName().substring(prefix.length());
+
+                if (isNotEmpty(key)) {
+                    String[] entries = key.split(Pattern.quote(DELIMITER), 2);
+
+                    set.add(entries[0]
+                            + (blob.isDirectory() ? DELIMITER : EMPTY));
+                }
+            }
+        } catch (Exception exception) {
+            if (exception instanceof TransferFailedException) {
+                throw (TransferFailedException) exception;
+            } else if (exception instanceof AuthorizationException) {
+                throw (AuthorizationException) exception;
+            } else {
+                throw new TransferFailedException(name, exception);
+            }
+        }
+
+        return set.stream().collect(toList());
     }
 }
