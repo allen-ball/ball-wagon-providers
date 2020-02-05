@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   ##########################################################################
-  SPDX-License-Identifier: Apache-2.0
-
   $Id$
+  $HeadURL$
   %%
-  Copyright (C) 2020 Allen D. Ball
+  Copyright (C) 2017 - 2020 Allen D. Ball
   %%
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -37,7 +36,7 @@
     <version>20200131-SNAPSHOT</version>
     <relativePath>../ball/parent/pom.xml</relativePath>
   </parent>
-  <inceptionYear>2020</inceptionYear>
+  <inceptionYear>2017</inceptionYear>
   <properties>
     <jre.version>1.8</jre.version>
     <maven.javadoc.skip>true</maven.javadoc.skip>
