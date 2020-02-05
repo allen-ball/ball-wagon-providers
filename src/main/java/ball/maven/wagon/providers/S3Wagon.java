@@ -38,6 +38,7 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
 import org.apache.maven.wagon.TransferFailedException;
 import org.apache.maven.wagon.Wagon;
@@ -60,7 +61,7 @@ import static org.apache.commons.lang3.StringUtils.strip;
  * @version $Revision$
  */
 @Component(hint = "s3", role = Wagon.class, instantiationStrategy = "per-lookup")
-@NoArgsConstructor @ToString
+@NoArgsConstructor @ToString @Slf4j
 public class S3Wagon extends AbstractWagonProvider {
     private volatile Bucket bucket = null;
     private TransferManager manager = null;

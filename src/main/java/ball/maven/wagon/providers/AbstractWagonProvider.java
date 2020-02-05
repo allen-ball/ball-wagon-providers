@@ -27,6 +27,7 @@ import java.nio.file.spi.FileTypeDetector;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.wagon.AbstractWagon;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
 import org.apache.maven.wagon.TransferFailedException;
@@ -44,7 +45,7 @@ import static org.apache.commons.lang3.StringUtils.strip;
  * @author {@link.uri mailto:ball@hcf.dev Allen D. Ball}
  * @version $Revision$
  */
-@NoArgsConstructor(access = PROTECTED)
+@NoArgsConstructor(access = PROTECTED) @Slf4j
 public abstract class AbstractWagonProvider extends AbstractWagon {
 
     /**

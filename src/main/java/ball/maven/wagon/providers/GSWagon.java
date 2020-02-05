@@ -30,6 +30,7 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
 import org.apache.maven.wagon.TransferFailedException;
 import org.apache.maven.wagon.Wagon;
@@ -52,7 +53,7 @@ import static org.apache.commons.lang3.StringUtils.strip;
  * @version $Revision$
  */
 @Component(hint = "gs", role = Wagon.class, instantiationStrategy = "per-lookup")
-@NoArgsConstructor @ToString
+@NoArgsConstructor @ToString @Slf4j
 public class GSWagon extends AbstractWagonProvider {
     private volatile Bucket bucket = null;
 
