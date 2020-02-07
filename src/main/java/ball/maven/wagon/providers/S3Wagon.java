@@ -20,9 +20,12 @@ package ball.maven.wagon.providers;
  * limitations under the License.
  * ##########################################################################
  */
-import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWSCredentialsProviderChain;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.regions.AwsProfileRegionProvider;
 import com.amazonaws.regions.AwsRegionProvider;
+import com.amazonaws.regions.AwsRegionProviderChain;
 import com.amazonaws.regions.DefaultAwsRegionProviderChain;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
@@ -36,7 +39,9 @@ import java.io.File;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
@@ -63,6 +68,8 @@ import static org.apache.commons.lang3.StringUtils.strip;
 @Component(hint = "s3", role = Wagon.class, instantiationStrategy = "per-lookup")
 @NoArgsConstructor @ToString @Slf4j
 public class S3Wagon extends AbstractWagonProvider {
+    @Getter @Setter private String profile = null;
+    @Getter @Setter private String region = null;
     private volatile Bucket bucket = null;
     private TransferManager manager = null;
 
@@ -72,14 +79,10 @@ public class S3Wagon extends AbstractWagonProvider {
             if (bucket == null) {
                 synchronized (this) {
                     if (bucket == null) {
-                        AWSCredentialsProvider credentials =
-                            new DefaultAWSCredentialsProviderChain();
-                        AwsRegionProvider region =
-                            new DefaultAwsRegionProviderChain();
                         AmazonS3 client =
                             AmazonS3ClientBuilder.standard()
-                            .withCredentials(credentials)
-                            .withRegion(region.getRegion())
+                            .withCredentials(new CredentialsProviderChain())
+                            .withRegion(new RegionProviderChain().getRegion())
                             .build();
                         String name = getHost();
 
@@ -277,5 +280,29 @@ public class S3Wagon extends AbstractWagonProvider {
         }
 
         return set.stream().collect(toList());
+    }
+
+    private class CredentialsProviderChain extends AWSCredentialsProviderChain {
+        public CredentialsProviderChain() {
+            super(new ProfileCredentialsProvider(S3Wagon.this.profile),
+                  DefaultAWSCredentialsProviderChain.getInstance());
+        }
+    }
+
+    private class RegionProviderChain extends AwsRegionProviderChain {
+        public RegionProviderChain() {
+            super(new RegionProvider(),
+                  new AwsProfileRegionProvider(S3Wagon.this.profile),
+                  new AwsProfileRegionProvider("profile "
+                                               + S3Wagon.this.profile),
+                  new DefaultAwsRegionProviderChain());
+        }
+    }
+
+    private class RegionProvider extends AwsRegionProvider {
+        public RegionProvider() { super(); }
+
+        @Override
+        public String getRegion() { return S3Wagon.this.region; }
     }
 }
