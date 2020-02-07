@@ -20,15 +20,19 @@ package ball.maven.wagon.providers;
  * limitations under the License.
  * ##########################################################################
  */
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
@@ -40,6 +44,7 @@ import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.resource.Resource;
 import org.codehaus.plexus.component.annotations.Component;
 
+import static com.google.api.services.storage.StorageScopes.CLOUD_PLATFORM;
 import static com.google.cloud.storage.Storage.BlobListOption;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
@@ -55,6 +60,7 @@ import static org.apache.commons.lang3.StringUtils.strip;
 @Component(hint = "gs", role = Wagon.class, instantiationStrategy = "per-lookup")
 @NoArgsConstructor @ToString @Slf4j
 public class GSWagon extends AbstractWagonProvider {
+    @Getter @Setter private File credentials = null;
     private volatile Bucket bucket = null;
 
     @Override
@@ -63,9 +69,21 @@ public class GSWagon extends AbstractWagonProvider {
             if (bucket == null) {
                 synchronized (this) {
                     if (bucket == null) {
-                        bucket =
-                            StorageOptions.getDefaultInstance().getService()
-                            .get(getHost());
+                        StorageOptions.Builder builder =
+                            StorageOptions.newBuilder();
+
+                        if (credentials != null) {
+                            try (FileInputStream in =
+                                     new FileInputStream(credentials)) {
+                                builder.setCredentials(GoogleCredentials
+                                                       .fromStream(in)
+                                                       .createScoped(CLOUD_PLATFORM));
+                            }
+                        }
+
+                        Storage storage = builder.build().getService();
+
+                        bucket = storage.get(getHost());
                     }
                 }
             }
