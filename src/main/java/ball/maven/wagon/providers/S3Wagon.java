@@ -39,6 +39,7 @@ import java.io.File;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
+import javax.inject.Named;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -51,7 +52,6 @@ import org.apache.maven.wagon.authentication.AuthenticationException;
 import org.apache.maven.wagon.authorization.AuthorizationException;
 import org.apache.maven.wagon.events.TransferEvent;
 import org.apache.maven.wagon.resource.Resource;
-import org.codehaus.plexus.component.annotations.Component;
 
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
@@ -65,7 +65,7 @@ import static org.apache.commons.lang3.StringUtils.strip;
  * @author {@link.uri mailto:ball@hcf.dev Allen D. Ball}
  * @version $Revision$
  */
-@Component(hint = "s3", role = Wagon.class, instantiationStrategy = "per-lookup")
+@Named("s3")
 @NoArgsConstructor @ToString @Slf4j
 public class S3Wagon extends AbstractWagonProvider {
     @Getter @Setter private String profile = null;
