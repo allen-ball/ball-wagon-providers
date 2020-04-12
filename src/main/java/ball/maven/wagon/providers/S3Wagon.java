@@ -293,8 +293,6 @@ public class S3Wagon extends AbstractWagonProvider {
         public RegionProviderChain() {
             super(new RegionProvider(),
                   new AwsProfileRegionProvider(S3Wagon.this.profile),
-                  new AwsProfileRegionProvider("profile "
-                                               + S3Wagon.this.profile),
                   new DefaultAwsRegionProviderChain());
         }
     }
