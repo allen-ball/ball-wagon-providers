@@ -282,6 +282,7 @@ public class S3Wagon extends AbstractWagonProvider {
         return set.stream().collect(toList());
     }
 
+    @ToString
     private class CredentialsProviderChain extends AWSCredentialsProviderChain {
         public CredentialsProviderChain() {
             super(new ProfileCredentialsProvider(S3Wagon.this.profile),
@@ -289,6 +290,7 @@ public class S3Wagon extends AbstractWagonProvider {
         }
     }
 
+    @ToString
     private class RegionProviderChain extends AwsRegionProviderChain {
         public RegionProviderChain() {
             super(new RegionProvider(),
@@ -297,6 +299,7 @@ public class S3Wagon extends AbstractWagonProvider {
         }
     }
 
+    @ToString
     private class RegionProvider extends AwsRegionProvider {
         public RegionProvider() { super(); }
 
