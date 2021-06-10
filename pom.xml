@@ -28,7 +28,7 @@
   <description></description>
   <groupId>ball</groupId>
   <artifactId>ball-wagon-providers</artifactId>
-  <version>3.2.1.20210602</version>
+  <version>3.2.2-SNAPSHOT</version>
   <packaging>jar</packaging>
   <parent>
     <groupId>ball</groupId>
