@@ -28,12 +28,12 @@
   <description></description>
   <groupId>ball</groupId>
   <artifactId>ball-wagon-providers</artifactId>
-  <version>3.2.1.20210602</version>
+  <version>3.2.2.20210611</version>
   <packaging>jar</packaging>
   <parent>
     <groupId>ball</groupId>
     <artifactId>parent</artifactId>
-    <version>20210602.0</version>
+    <version>20210611.0</version>
     <relativePath>../ball/parent/pom.xml</relativePath>
   </parent>
   <inceptionYear>2017</inceptionYear>
