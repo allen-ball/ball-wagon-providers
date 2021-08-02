@@ -9,7 +9,7 @@ Description
 [GCP Cloud Storage].
 
 Javadoc is published at
-<https://github.com/allen-ball/ball-wagon-providers/>.
+<https://allen-ball.github.io/ball-wagon-providers/>.
 
 To load, in `${user.home}/.m2/settings.xml`:
 
