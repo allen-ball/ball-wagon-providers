@@ -5,7 +5,7 @@ ball-wagon-providers
 Description
 -----------
 
-[Apache Maven] [Wagon][Apache Maven Wagon] providers for [AWS S3] and 
+[Apache Maven] [Wagon][Apache Maven Wagon] providers for [AWS S3] and
 [GCP Cloud Storage].
 
 Javadoc is published at
