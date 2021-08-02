@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <name>ball-wagon-providers</name>
+  <groupId>javadoc</groupId>
+  <artifactId>ball-wagon-providers</artifactId>
+  <packaging>pom</packaging>
+  <parent>
+    <groupId>ball</groupId>
+    <artifactId>javadoc</artifactId>
+    <version>20210722.1</version>
+    <relativePath>../GitHub/javadoc/pom.xml</relativePath>
+  </parent>
+  <properties>
+    <javadoc.artifact>${project.artifactId}</javadoc.artifact>
+    <javadoc.version>3.2.2.20210722</javadoc.version>
+    <maven.compiler.source>8</maven.compiler.source>
+  </properties>
+  <dependencies verbose="true">
+    <dependency>
+      <groupId>ball</groupId>
+      <artifactId>${javadoc.artifact}</artifactId>
+      <version>${javadoc.version}</version>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <includeDependencySources>true</includeDependencySources>
+          <dependencySourceIncludes>ball:${project.artifactId}</dependencySourceIncludes>
+          <doctitle>API Documentation</doctitle>
+          <groups>
+            <group>
+              <title>${project.artifactId}.jar</title>
+              <packages>ball.*</packages>
+            </group>
+          </groups>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
