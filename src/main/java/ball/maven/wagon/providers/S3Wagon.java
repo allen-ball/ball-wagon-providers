@@ -2,8 +2,6 @@ package ball.maven.wagon.providers;
 /*-
  * ##########################################################################
  * Maven Wagon Providers
- * $Id$
- * $HeadURL$
  * %%
  * Copyright (C) 2017 - 2021 Allen D. Ball
  * %%
@@ -63,7 +61,6 @@ import static org.apache.commons.lang3.StringUtils.strip;
  * AWS S3 {@link Wagon} implementation.
  *
  * @author {@link.uri mailto:ball@hcf.dev Allen D. Ball}
- * @version $Revision$
  */
 @Named("s3")
 @NoArgsConstructor @ToString @Slf4j

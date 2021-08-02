@@ -2,8 +2,6 @@ package ball.maven.wagon.providers;
 /*-
  * ##########################################################################
  * Maven Wagon Providers
- * $Id$
- * $HeadURL$
  * %%
  * Copyright (C) 2017 - 2021 Allen D. Ball
  * %%
@@ -55,7 +53,6 @@ import static org.apache.commons.lang3.StringUtils.strip;
  * Google Storage {@link Wagon} implementation.
  *
  * @author {@link.uri mailto:ball@hcf.dev Allen D. Ball}
- * @version $Revision$
  */
 @Named("gs")
 @NoArgsConstructor @ToString @Slf4j

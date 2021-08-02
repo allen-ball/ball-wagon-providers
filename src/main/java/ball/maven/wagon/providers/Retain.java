@@ -2,8 +2,6 @@ package ball.maven.wagon.providers;
 /*-
  * ##########################################################################
  * Maven Wagon Providers
- * $Id$
- * $HeadURL$
  * %%
  * Copyright (C) 2017 - 2021 Allen D. Ball
  * %%
@@ -31,7 +29,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * discarding {@code package-info.class}.
  *
  * @author {@link.uri mailto:ball@hcf.dev Allen D. Ball}
- * @version $Revision$
  */
 @Retention(RUNTIME)
 @Target({ PACKAGE })
