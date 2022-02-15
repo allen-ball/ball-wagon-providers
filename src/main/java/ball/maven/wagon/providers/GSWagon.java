@@ -3,7 +3,7 @@ package ball.maven.wagon.providers;
  * ##########################################################################
  * Maven Wagon Providers
  * %%
- * Copyright (C) 2017 - 2021 Allen D. Ball
+ * Copyright (C) 2017 - 2022 Allen D. Ball
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,12 +66,10 @@ public class GSWagon extends AbstractWagonProvider {
             if (bucket == null) {
                 synchronized (this) {
                     if (bucket == null) {
-                        StorageOptions.Builder builder =
-                            StorageOptions.newBuilder();
+                        StorageOptions.Builder builder = StorageOptions.newBuilder();
 
                         if (credentials != null) {
-                            try (FileInputStream in =
-                                     new FileInputStream(credentials)) {
+                            try (FileInputStream in = new FileInputStream(credentials)) {
                                 builder.setCredentials(GoogleCredentials
                                                        .fromStream(in)
                                                        .createScoped(CLOUD_PLATFORM));
@@ -92,8 +90,7 @@ public class GSWagon extends AbstractWagonProvider {
             if (exception instanceof AuthenticationException) {
                 throw (AuthenticationException) exception;
             } else {
-                throw new AuthenticationException(getRepository().toString(),
-                                                  exception);
+                throw new AuthenticationException(getRepository().toString(), exception);
             }
         }
     }
@@ -102,10 +99,7 @@ public class GSWagon extends AbstractWagonProvider {
     public void closeConnection() { }
 
     @Override
-    public void get(String source,
-                    File target) throws TransferFailedException,
-                                        ResourceDoesNotExistException,
-                                        AuthorizationException {
+    public void get(String source, File target) throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
         Resource resource = new Resource(source);
 
         fireGetInitiated(resource, target);
@@ -127,8 +121,7 @@ public class GSWagon extends AbstractWagonProvider {
             } else if (exception instanceof AuthorizationException) {
                 throw (AuthorizationException) exception;
             } else {
-                throw new TransferFailedException(target + " <- " + source,
-                                                  exception);
+                throw new TransferFailedException(target + " <- " + source, exception);
             }
         }
 
@@ -137,10 +130,7 @@ public class GSWagon extends AbstractWagonProvider {
     }
 
     @Override
-    public boolean getIfNewer(String source, File target,
-                              long timestamp) throws TransferFailedException,
-                                                     ResourceDoesNotExistException,
-                                                     AuthorizationException {
+    public boolean getIfNewer(String source, File target, long timestamp) throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
         boolean newer = false;
         Blob blob = bucket.get(prefix() + source);
 
@@ -156,10 +146,7 @@ public class GSWagon extends AbstractWagonProvider {
     }
 
     @Override
-    public void put(File source,
-                    String target) throws TransferFailedException,
-                                          ResourceDoesNotExistException,
-                                          AuthorizationException {
+    public void put(File source, String target) throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
         Resource resource = new Resource(target);
 
         resource.setContentLength(source.length());
@@ -188,8 +175,7 @@ public class GSWagon extends AbstractWagonProvider {
             } else if (exception instanceof AuthorizationException) {
                 throw (AuthorizationException) exception;
             } else {
-                throw new TransferFailedException(source + " -> " + target,
-                                                  exception);
+                throw new TransferFailedException(source + " -> " + target, exception);
             }
         }
 
@@ -198,15 +184,12 @@ public class GSWagon extends AbstractWagonProvider {
     }
 
     @Override
-    public boolean resourceExists(String name) throws TransferFailedException,
-                                                      AuthorizationException {
+    public boolean resourceExists(String name) throws TransferFailedException, AuthorizationException {
         return bucket.get(prefix() + name) != null;
     }
 
     @Override
-    public List<String> getFileList(String name) throws TransferFailedException,
-                                                        ResourceDoesNotExistException,
-                                                        AuthorizationException {
+    public List<String> getFileList(String name) throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
         TreeSet<String> set = new TreeSet<>();
         String prefix = prefix();
 
@@ -228,8 +211,7 @@ public class GSWagon extends AbstractWagonProvider {
                 if (isNotEmpty(key)) {
                     String[] entries = key.split(Pattern.quote(DELIMITER), 2);
 
-                    set.add(entries[0]
-                            + (blob.isDirectory() ? DELIMITER : EMPTY));
+                    set.add(entries[0] + (blob.isDirectory() ? DELIMITER : EMPTY));
                 }
             }
         } catch (Exception exception) {

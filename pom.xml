@@ -3,7 +3,7 @@
   ##########################################################################
   Maven Wagon Providers
   %%
-  Copyright (C) 2017 - 2021 Allen D. Ball
+  Copyright (C) 2017 - 2022 Allen D. Ball
   %%
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -27,12 +27,12 @@
   <description></description>
   <groupId>ball</groupId>
   <artifactId>ball-wagon-providers</artifactId>
-  <version>3.2.2.20210722</version>
+  <version>3.2.2-SNAPSHOT</version>
   <packaging>jar</packaging>
   <parent>
     <groupId>ball</groupId>
     <artifactId>parent</artifactId>
-    <version>20210722.0</version>
+    <version>2022.0.0-SNAPSHOT</version>
     <relativePath>../ball/parent/pom.xml</relativePath>
   </parent>
   <inceptionYear>2017</inceptionYear>
@@ -46,7 +46,19 @@
   <properties>
     <jse.target>8</jse.target>
     <maven.javadoc.skip>true</maven.javadoc.skip>
+    <aws-java-sdk.version>1.12.160</aws-java-sdk.version>
   </properties>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.amazonaws</groupId>
+        <artifactId>aws-java-sdk-bom</artifactId>
+        <version>${aws-java-sdk.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <dependencies verbose="true">
     <dependency>
       <groupId>com.amazonaws</groupId>

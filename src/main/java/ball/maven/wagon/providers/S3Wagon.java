@@ -3,7 +3,7 @@ package ball.maven.wagon.providers;
  * ##########################################################################
  * Maven Wagon Providers
  * %%
- * Copyright (C) 2017 - 2021 Allen D. Ball
+ * Copyright (C) 2017 - 2022 Allen D. Ball
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,8 +84,7 @@ public class S3Wagon extends AbstractWagonProvider {
                         String name = getHost();
 
                         bucket =
-                            client.listBuckets()
-                            .stream()
+                            client.listBuckets().stream()
                             .filter(t -> name.equals(t.getName()))
                             .findFirst()
                             .orElseThrow(() -> new ResourceDoesNotExistException(getRepository().toString()));
@@ -100,8 +99,7 @@ public class S3Wagon extends AbstractWagonProvider {
             if (exception instanceof AuthenticationException) {
                 throw (AuthenticationException) exception;
             } else {
-                throw new AuthenticationException(getRepository().toString(),
-                                                  exception);
+                throw new AuthenticationException(getRepository().toString(), exception);
             }
         }
     }
@@ -121,10 +119,7 @@ public class S3Wagon extends AbstractWagonProvider {
     }
 
     @Override
-    public void get(String source,
-                    File target) throws TransferFailedException,
-                                        ResourceDoesNotExistException,
-                                        AuthorizationException {
+    public void get(String source, File target) throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
         Resource resource = new Resource(source);
 
         fireGetInitiated(resource, target);
@@ -146,8 +141,7 @@ public class S3Wagon extends AbstractWagonProvider {
             } else if (exception instanceof AuthorizationException) {
                 throw (AuthorizationException) exception;
             } else {
-                throw new TransferFailedException(target + " <- " + source,
-                                                  exception);
+                throw new TransferFailedException(target + " <- " + source, exception);
             }
         }
 
@@ -156,10 +150,7 @@ public class S3Wagon extends AbstractWagonProvider {
     }
 
     @Override
-    public boolean getIfNewer(String source, File target,
-                              long timestamp) throws TransferFailedException,
-                                                     ResourceDoesNotExistException,
-                                                     AuthorizationException {
+    public boolean getIfNewer(String source, File target, long timestamp) throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
         boolean newer = false;
         ObjectMetadata metadata =
             manager.getAmazonS3Client()
@@ -177,10 +168,7 @@ public class S3Wagon extends AbstractWagonProvider {
     }
 
     @Override
-    public void put(File source,
-                    String target) throws TransferFailedException,
-                                          ResourceDoesNotExistException,
-                                          AuthorizationException {
+    public void put(File source, String target) throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
         Resource resource = new Resource(target);
 
         resource.setContentLength(source.length());
@@ -200,8 +188,7 @@ public class S3Wagon extends AbstractWagonProvider {
             } else if (exception instanceof AuthorizationException) {
                 throw (AuthorizationException) exception;
             } else {
-                throw new TransferFailedException(source + " -> " + target,
-                                                  exception);
+                throw new TransferFailedException(source + " -> " + target, exception);
             }
         }
 
@@ -210,8 +197,7 @@ public class S3Wagon extends AbstractWagonProvider {
     }
 
     @Override
-    public boolean resourceExists(String name) throws TransferFailedException,
-                                                      AuthorizationException {
+    public boolean resourceExists(String name) throws TransferFailedException, AuthorizationException {
         boolean exists = false;
 
         try {
@@ -232,9 +218,7 @@ public class S3Wagon extends AbstractWagonProvider {
     }
 
     @Override
-    public List<String> getFileList(String name) throws TransferFailedException,
-                                                        ResourceDoesNotExistException,
-                                                        AuthorizationException {
+    public List<String> getFileList(String name) throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
         TreeSet<String> set = new TreeSet<>();
         String prefix = prefix();
 
@@ -254,8 +238,7 @@ public class S3Wagon extends AbstractWagonProvider {
                     String key = summary.getKey().substring(prefix.length());
                     String[] entries = key.split(Pattern.quote(DELIMITER), 2);
 
-                    set.add(entries[0]
-                            + ((entries.length > 1) ? DELIMITER : EMPTY));
+                    set.add(entries[0] + ((entries.length > 1) ? DELIMITER : EMPTY));
                 }
 
                 if (listing.isTruncated()) {

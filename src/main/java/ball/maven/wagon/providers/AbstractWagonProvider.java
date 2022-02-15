@@ -3,7 +3,7 @@ package ball.maven.wagon.providers;
  * ##########################################################################
  * Maven Wagon Providers
  * %%
- * Copyright (C) 2017 - 2021 Allen D. Ball
+ * Copyright (C) 2017 - 2022 Allen D. Ball
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,8 +53,7 @@ public abstract class AbstractWagonProvider extends AbstractWagon {
     private URI uri = null;
     private String prefix = null;
     private ServiceLoader<FileTypeDetector> loader =
-        ServiceLoader.load(FileTypeDetector.class,
-                           getClass().getClassLoader());
+        ServiceLoader.load(FileTypeDetector.class, getClass().getClassLoader());
 
     private URI getURI() {
         if (uri == null) {
@@ -135,10 +134,7 @@ public abstract class AbstractWagonProvider extends AbstractWagon {
     public boolean supportsDirectoryCopy() { return false; }
 
     @Override
-    public void putDirectory(File source,
-                             String target) throws TransferFailedException,
-                                                   ResourceDoesNotExistException,
-                                                   AuthorizationException {
+    public void putDirectory(File source, String target) throws TransferFailedException, ResourceDoesNotExistException, AuthorizationException {
         throw new IllegalStateException();
     }
 }
