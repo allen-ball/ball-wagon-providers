@@ -43,6 +43,9 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
+  <scm>
+    <url>https://github.com/allen-ball/ball-wagon-providers.git</url>
+  </scm>
   <properties>
     <jse.target>8</jse.target>
     <maven.javadoc.skip>true</maven.javadoc.skip>
