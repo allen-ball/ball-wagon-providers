@@ -33,7 +33,7 @@ And in `pom.xml`:
       <extension>
         <groupId>ball</groupId>
         <artifactId>ball-wagon-providers</artifactId>
-        <version>3.2.2.20210722</version>
+        <version>3.2.2.20220227</version>
       </extension>
     </extensions>
     ...
